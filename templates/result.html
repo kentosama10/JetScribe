@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8">
   <title>WhisperX — Result</title>
+  <!-- Add Font Awesome for the download icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
   <style>
     :root {
       --primary-color: #2563eb;
@@ -69,7 +71,9 @@
     }
 
     .files-list a {
-      display: inline-block;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 0.75rem 1rem;
       background: #f1f5f9;
       border-radius: 6px;
@@ -83,6 +87,17 @@
     .files-list a:hover {
       background: #e2e8f0;
       transform: translateX(4px);
+    }
+
+    .download-icon {
+      color: var(--primary-color);
+      font-size: 1.2rem;
+      opacity: 0.8;
+      transition: opacity 0.2s;
+    }
+
+    .files-list a:hover .download-icon {
+      opacity: 1;
     }
 
     pre {
@@ -124,7 +139,12 @@
       <h3>Generated Files</h3>
       <ul class="files-list">
         {% for f in files %}
-          <li><a href="{{ url_for('outputs', filename=f) }}">{{ f }}</a></li>
+          <li>
+            <a href="{{ url_for('outputs', filename=f) }}" download>
+              <span>{{ f }}</span>
+              <i class="fas fa-download download-icon"></i>
+            </a>
+          </li>
         {% endfor %}
       </ul>
 
