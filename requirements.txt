@@ -1,0 +1,10 @@
+flask
+fastapi
+uvicorn
+jinja2
+python-multipart
+torch
+torchaudio
+transformers
+whisperx
+pydantic
