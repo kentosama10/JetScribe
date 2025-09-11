@@ -4,62 +4,177 @@
   <meta charset="utf-8">
   <title>WhisperX Web UI</title>
   <style>
-    body { font-family: Arial; max-width: 800px; margin: 40px auto; }
-    label { display:block; margin-top: 12px; }
-    .muted { color: #666; font-size: 0.9em; }
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #f8fafc;
+      --text-color: #1e293b;
+    }
+
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 800px; 
+      margin: 40px auto;
+      padding: 0 20px;
+      background: var(--bg-color);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      color: var(--primary-color);
+    }
+
+    .form-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    input[type="file"],
+    select,
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+
+    select {
+      background-color: white;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: normal;
+    }
+
+    input[type="checkbox"] {
+      width: 1.2rem;
+      height: 1.2rem;
+      accent-color: var(--primary-color);
+    }
+
+    .muted {
+      color: #64748b;
+      font-size: 0.9rem;
+      padding: 1rem 0;
+      border-top: 1px solid #e2e8f0;
+      margin-top: 1rem;
+    }
+
+    button {
+      background: var(--primary-color);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1.5rem;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background: #1d4ed8;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    #status {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      border-radius: 6px;
+      background: #dcfce7;
+      color: #166534;
+      text-align: center;
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>WhisperX — Upload & Transcribe</h1>
 
-  <form action="{{ url_for('transcribe') }}" method="post" enctype="multipart/form-data" onsubmit="onSubmit()">
-    <label>Choose file:
-      <input type="file" name="file" required>
-    </label>
+  <div class="form-container">
+    <form action="{{ url_for('transcribe') }}" method="post" enctype="multipart/form-data" onsubmit="onSubmit()">
+      <label>Choose file:
+        <input type="file" name="file" required accept="audio/*,video/*">
+      </label>
 
-    <label>Model:
-      <select name="model">
-        <option>tiny</option>
-        <option>base</option>
-        <option>small</option>
-        <option selected>medium</option>
-        <option>large-v2</option>
-        <option>large-v3</option>
-      </select>
-    </label>
+      <label>Model:
+        <select name="model">
+          <option>tiny</option>
+          <option>base</option>
+          <option>small</option>
+          <option selected>medium</option>
+          <option>large-v2</option>
+          <option>large-v3</option>
+        </select>
+      </label>
 
-    <label>Output format:
-      <select name="format">
-        <option value="txt" selected>txt</option>
-        <option value="srt">srt</option>
-        <option value="json">json</option>
-        <option value="txt,srt,json">all</option>
-      </select>
-    </label>
+      <label>Output format:
+        <select name="format">
+          <option value="txt" selected>txt</option>
+          <option value="srt">srt</option>
+          <option value="json">json</option>
+          <option value="txt,srt,json">all</option>
+        </select>
+      </label>
 
-    <label>Device:
-      <select name="device">
-        <option value="cpu" selected>cpu</option>
-        <option value="cuda">cuda</option>
-      </select>
-    </label>
+      <label>Device:
+        <select name="device">
+          <option value="cpu" selected>cpu</option>
+          <option value="cuda">cuda</option>
+        </select>
+      </label>
 
-    <label><input type="checkbox" name="timestamped_txt"> Create timestamped TXT (makes sure JSON is produced)</label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="timestamped_txt">
+        Create timestamped TXT (makes sure JSON is produced)
+      </label>
 
-    <label><input type="checkbox" name="diarize"> Enable diarization (pyannote) — requires HF token</label>
-    <label>Hugging Face token: <input type="password" name="hf_token" placeholder="hf_xxx"></label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="diarize">
+        Enable diarization (pyannote) — requires HF token (Request to IT)
+      </label>
 
-    <p class="muted">Large models take a long time and need more RAM/VRAM. For testing, use small/medium.</p>
+      <label>Hugging Face token:
+        <input type="password" name="hf_token" placeholder="hf_xxx">
+      </label>
 
-    <button type="submit" id="submitBtn">Upload & Transcribe</button>
-  </form>
+      <p class="muted">Large models take a long time and need more RAM/VRAM. For testing, use small/medium.</p>
 
-  <div id="status" style="margin-top:20px; color:green;"></div>
+      <button type="submit" id="submitBtn">Upload & Transcribe</button>
+    </form>
+  </div>
+
+  <div id="status"></div>
 
   <script>
     function onSubmit(){
       document.getElementById('submitBtn').disabled = true;
-      document.getElementById('status').innerText = "Uploading & processing — this can take a while for big files. Please wait...";
+      const status = document.getElementById('status');
+      status.style.display = 'block';
+      status.innerText = "Uploading & processing — this can take a while for big files. Please wait...";
     }
   </script>
 </body>
