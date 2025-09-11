@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>WhisperX Web UI</title>
+  <title>JetScribe</title>
   <style>
     :root {
       --primary-color: #2563eb;
@@ -112,7 +112,7 @@
   </style>
 </head>
 <body>
-  <h1>WhisperX — Upload & Transcribe</h1>
+  <h1>JetScribe — Upload & Transcribe</h1>
 
   <div class="form-container">
     <form action="{{ url_for('transcribe') }}" method="post" enctype="multipart/form-data" onsubmit="onSubmit()">
@@ -133,8 +133,8 @@
 
       <label>Output format:
         <select name="format">
-          <option value="txt" selected>txt</option>
-          <option value="srt">srt</option>
+          <option value="txt" >txt</option>
+          <option value="srt" selected>srt</option>
           <option value="json">json</option>
           <option value="txt,srt,json">all</option>
         </select>
@@ -154,11 +154,7 @@
 
       <label class="checkbox-label">
         <input type="checkbox" name="diarize">
-        Enable diarization (pyannote) — requires HF token (Request to IT)
-      </label>
-
-      <label>Hugging Face token:
-        <input type="password" name="hf_token" placeholder="hf_xxx">
+        Enable speaker diarization
       </label>
 
       <p class="muted">Large models take a long time and need more RAM/VRAM. For testing, use small/medium.</p>

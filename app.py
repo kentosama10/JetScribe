@@ -4,6 +4,13 @@ import uuid
 from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
 from werkzeug.utils import secure_filename
 from transcriber import run_whisperx
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get the HF token
+hf_token = os.getenv('HF_TOKEN')
 
 ALLOWED_EXT = {"wav", "mp3", "m4a", "mp4", "mkv", "flac", "ogg"}
 UPLOAD_DIR = "uploads"
@@ -42,7 +49,6 @@ def transcribe():
     device = request.form.get("device", "cpu")
     compute_type = request.form.get("compute", "float32")
     diarize = request.form.get("diarize") == "on"
-    hf_token = request.form.get("hf_token", None)
     timestamped_txt = request.form.get("timestamped_txt") == "on"
 
     # create safe unique filename
