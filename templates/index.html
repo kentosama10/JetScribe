@@ -1,18 +1,19 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <title>JetScribe</title>
   <style>
     :root {
-      --primary-color: #2563eb;
+      --primary-color: #f18723;
       --bg-color: #f8fafc;
       --text-color: #1e293b;
     }
 
-    body { 
+    body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      max-width: 800px; 
+      max-width: 800px;
       margin: 40px auto;
       padding: 0 20px;
       background: var(--bg-color);
@@ -92,7 +93,7 @@
     }
 
     button:hover {
-      background: #1d4ed8;
+      background: #CE007C;
     }
 
     button:disabled {
@@ -109,8 +110,55 @@
       text-align: center;
       display: none;
     }
+
+    .model-select option {
+      cursor: help;
+    }
+
+    .model-select option:hover {
+      background-color: var(--bg-color);
+    }
+
+    .model-select {
+      cursor: help;
+      border-bottom: 1px dotted var(--primary-color);
+    }
+
+    @keyframes pulse {
+      0%,
+      40%,
+      100% {
+        opacity: 0.2;
+      }
+
+      20% {
+        opacity: 1;
+      }
+    }
+
+    .loading-dots span {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: currentColor;
+      margin: 0 4px;
+    }
+
+    .loading-dots span:nth-child(1) {
+      animation: pulse 1.4s linear infinite;
+    }
+
+    .loading-dots span:nth-child(2) {
+      animation: pulse 1.4s linear infinite 0.2s;
+    }
+
+    .loading-dots span:nth-child(3) {
+      animation: pulse 1.4s linear infinite 0.4s;
+    }
   </style>
 </head>
+
 <body>
   <h1>JetScribe — Upload & Transcribe</h1>
 
@@ -121,20 +169,20 @@
       </label>
 
       <label>Model:
-        <select name="model">
-          <option>tiny</option>
-          <option>base</option>
-          <option>small</option>
-          <option selected>medium</option>
-          <option>large-v2</option>
-          <option>large-v3</option>
+        <select name="model" class="model-select">
+          <option value="tiny" title="Fastest, lowest accuracy. Good for quick tests.">tiny</option>
+          <option value="base" title="Fast with decent accuracy. Good for short clips.">base</option>
+          <option value="small" title="Balanced speed and accuracy. ~2GB RAM required.">small</option>
+          <option value="medium" selected title="Good accuracy with reasonable speed. Recommended for most uses.">medium</option>
+          <option value="large-v2" title="High accuracy but slower processing. Best for complex audio.">large-v2</option>
+          <option value="large-v3" title="Latest and most accurate model. Requires significant RAM/processing power.">large-v3</option>
         </select>
       </label>
 
       <label>Output format:
         <select name="format">
-          <option value="txt" >txt</option>
-          <option value="srt" selected>srt</option>
+          <option value="txt" selected>txt</option>
+          <option value="srt">srt</option>
           <option value="json">json</option>
           <option value="txt,srt,json">all</option>
         </select>
@@ -143,13 +191,8 @@
       <label>Device:
         <select name="device">
           <option value="cpu" selected>cpu</option>
-          <option value="cuda">cuda</option>
+          <!-- <option value="cuda">cuda</option> -->
         </select>
-      </label>
-
-      <label class="checkbox-label">
-        <input type="checkbox" name="timestamped_txt">
-        Create timestamped TXT (makes sure JSON is produced)
       </label>
 
       <label class="checkbox-label">
@@ -166,12 +209,23 @@
   <div id="status"></div>
 
   <script>
-    function onSubmit(){
-      document.getElementById('submitBtn').disabled = true;
-      const status = document.getElementById('status');
-      status.style.display = 'block';
-      status.innerText = "Uploading & processing — this can take a while for big files. Please wait...";
+    function onSubmit() {
+        document.getElementById('submitBtn').disabled = true;
+        const status = document.getElementById('status');
+        status.style.display = 'block';
+        status.innerHTML = `
+            Uploading & processing
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div style="font-size: 0.9em; margin-top: 8px;">
+                This can take a while for big files. Please wait...
+            </div>
+        `;
     }
   </script>
 </body>
+
 </html>
