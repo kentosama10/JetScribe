@@ -30,7 +30,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-2. Open your browser and navigate to `http://localhost:5000`
+2. Open your browser and navigate to `http://localhost:8080`
 
 3. Upload your audio/video file:
    - Select your file using the file picker
