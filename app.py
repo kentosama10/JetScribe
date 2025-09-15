@@ -24,6 +24,74 @@ app.secret_key = "dev-secret"  # change this for production!
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXT
 
+
+def _extract_transcript_text(absolute_file_paths):
+    """
+    Best-effort extraction of transcript text from generated files.
+    Preference order:
+    1) .timestamped.txt
+    2) .txt
+    3) .json (concatenate segment texts)
+    4) .srt (concatenate subtitle text lines)
+    Returns a string (may be empty if nothing usable found).
+    """
+    # Prefer timestamped txt
+    try_order = [
+        lambda p: p.lower().endswith('.timestamped.txt'),
+        lambda p: p.lower().endswith('.txt') and not p.lower().endswith('.timestamped.txt'),
+        lambda p: p.lower().endswith('.json'),
+        lambda p: p.lower().endswith('.srt'),
+    ]
+
+    # First pass for txt files
+    for predicate in try_order[:2]:
+        for p in absolute_file_paths:
+            if predicate(p):
+                try:
+                    with open(p, 'r', encoding='utf-8') as f:
+                        return f.read().strip()
+                except Exception:
+                    continue
+
+    # JSON: build from segments
+    for p in absolute_file_paths:
+        if p.lower().endswith('.json'):
+            try:
+                import json
+                with open(p, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                segments = data.get('segments') or []
+                lines = []
+                for seg in segments:
+                    text = seg.get('text')
+                    if text:
+                        lines.append(text.strip())
+                if lines:
+                    return "\n".join(lines).strip()
+            except Exception:
+                continue
+
+    # SRT: extract non-timestamp, non-index lines
+    for p in absolute_file_paths:
+        if p.lower().endswith('.srt'):
+            try:
+                lines = []
+                with open(p, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        s = line.strip()
+                        if not s:
+                            continue
+                        # Skip index lines (integers) and timestamp lines
+                        if s.isdigit() or ('-->' in s):
+                            continue
+                        lines.append(s)
+                if lines:
+                    return "\n".join(lines).strip()
+            except Exception:
+                continue
+
+    return ""
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -75,12 +143,15 @@ def transcribe():
         return render_template("result.html", success=False, log=result.get("log", ""), files=[])
 
     # show results (files are absolute paths; convert to relative filenames)
+    abs_files = result.get("files", [])
     files = []
-    for p in result.get("files", []):
+    for p in abs_files:
         if os.path.commonpath([os.path.abspath(p), os.path.abspath(OUTPUT_DIR)]) == os.path.abspath(OUTPUT_DIR):
             files.append(os.path.basename(p))
 
-    return render_template("result.html", success=True, files=files, log=result.get("log", ""))
+    transcript_text = _extract_transcript_text(abs_files)
+
+    return render_template("result.html", success=True, files=files, transcript_text=transcript_text)
 
 @app.route("/outputs/<path:filename>")
 def outputs(filename):

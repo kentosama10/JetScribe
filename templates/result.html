@@ -12,6 +12,13 @@
       --text-color: #1e293b;
       --success-color: #059669;
       --error-color: #dc2626;
+      --muted: #64748b;
+      --btn-bg: #ffffff;
+      --btn-border: #e2e8f0;
+      --btn-hover-bg: #f8fafc;
+      --btn-hover-border: #cbd5e1;
+      --btn-success-bg: #ecfdf5;
+      --btn-success-border: #34d399;
     }
 
     body { 
@@ -121,6 +128,56 @@
     .back-link:hover {
       text-decoration: underline;
     }
+
+    /* Copy button styles */
+    .copy-row {
+      display:flex; 
+      gap:12px; 
+      align-items:center; 
+      margin-bottom: 0.5rem;
+    }
+
+    .copy-tip {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.5rem 0.9rem;
+      background: var(--btn-bg);
+      color: var(--text-color);
+      border: 1px solid var(--btn-border);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.15s, border-color 0.15s, transform 0.05s, color 0.15s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      width: auto;
+    }
+
+    .copy-btn:hover {
+      background: var(--btn-hover-bg);
+      border-color: var(--btn-hover-border);
+    }
+
+    .copy-btn:active {
+      transform: translateY(1px);
+    }
+
+    .copy-btn .icon {
+      color: var(--primary-color);
+      font-size: 1rem;
+    }
+
+    .copy-btn.copied {
+      background: var(--btn-success-bg);
+      border-color: var(--btn-success-border);
+      color: var(--success-color);
+    }
   </style>
 </head>
 <body>
@@ -148,11 +205,61 @@
         {% endfor %}
       </ul>
 
-      <h3>Process Log</h3>
-      <pre>{{ log[:4000] }}</pre>
+      <h3>Transcription</h3>
+      <div class="copy-row">
+        <button id="copyBtn" type="button" class="copy-btn" aria-live="polite">
+          <i class="fa-regular fa-clipboard icon" aria-hidden="true"></i>
+          <span class="label">Copy</span>
+        </button>
+        <span class="copy-tip">Copy transcript to clipboard</span>
+        <span id="copyStatus" style="color: var(--success-color); display:none; font-size:0.95rem;">Copied!</span>
+      </div>
+      <pre id="transcriptBox">{{ transcript_text }}</pre>
       
       <a href="{{ url_for('index') }}" class="back-link">← Transcribe Another File</a>
     {% endif %}
   </div>
+<script>
+  (function(){
+    const btn = document.getElementById('copyBtn');
+    const status = document.getElementById('copyStatus');
+    const box = document.getElementById('transcriptBox');
+    if (btn && box) {
+      btn.addEventListener('click', async () => {
+        const icon = btn.querySelector('.icon');
+        const label = btn.querySelector('.label');
+        const prevIconClasses = icon ? icon.className : '';
+        const prevLabel = label ? label.textContent : '';
+        const showCopied = () => {
+          btn.classList.add('copied');
+          if (icon) icon.className = 'fa-solid fa-check icon';
+          if (label) label.textContent = 'Copied';
+          if (status) { status.style.display = 'inline'; }
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            if (icon) icon.className = prevIconClasses || 'fa-regular fa-clipboard icon';
+            if (label) label.textContent = prevLabel || 'Copy';
+            if (status) { status.style.display = 'none'; }
+          }, 1600);
+        };
+
+        try {
+          await navigator.clipboard.writeText(box.textContent || '');
+          showCopied();
+        } catch (e) {
+          // Fallback
+          const range = document.createRange();
+          range.selectNodeContents(box);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          try { document.execCommand('copy'); } catch (_) {}
+          sel.removeAllRanges();
+          showCopied();
+        }
+      });
+    }
+  })();
+</script>
 </body>
 </html>
