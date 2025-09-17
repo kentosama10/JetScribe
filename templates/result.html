@@ -183,41 +183,72 @@
 <body>
   <h1>Transcription Result</h1>
 
-  <div class="result-container">
-    {% if not success %}
-      <div class="status error">
-        <h3>Transcription Failed</h3>
-        <pre>{{ log }}</pre>
-      </div>
-      <a href="{{ url_for('index') }}" class="back-link">← Back to Upload</a>
-    {% else %}
-      <div class="status success">Transcription completed successfully ✅</div>
-      
-      <h3>Generated Files</h3>
-      <ul class="files-list">
-        {% for f in files %}
-          <li>
-            <a href="{{ url_for('outputs', filename=f) }}" download>
-              <span>{{ f }}</span>
-              <i class="fas fa-download download-icon"></i>
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
+  <style>
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      min-height: 200px;
+    }
+    .panel h2 { 
+      margin-top: 0; 
+      margin-bottom: 1rem; 
+      font-size: 1.25rem; 
+      color: var(--text-color); 
+    }
+  </style>
 
-      <h3>Transcription</h3>
-      <div class="copy-row">
-        <button id="copyBtn" type="button" class="copy-btn" aria-live="polite">
-          <i class="fa-regular fa-clipboard icon" aria-hidden="true"></i>
-          <span class="label">Copy</span>
-        </button>
-        <span class="copy-tip">Copy transcript to clipboard</span>
-        <span id="copyStatus" style="color: var(--success-color); display:none; font-size:0.95rem;">Copied!</span>
-      </div>
-      <pre id="transcriptBox">{{ transcript_text }}</pre>
-      
-      <a href="{{ url_for('index') }}" class="back-link">← Transcribe Another File</a>
-    {% endif %}
+  <div class="layout">
+    <div class="panel">
+      <h2>Downloads</h2>
+      {% if not success %}
+        <div class="status error">
+          <h3>Transcription Failed</h3>
+          <pre>{{ log }}</pre>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-link">← Back to Upload</a>
+      {% else %}
+        <div class="status success">Transcription completed successfully ✅</div>
+        <h3>Generated Files</h3>
+        <ul class="files-list">
+          {% for f in files %}
+            <li>
+              <a href="{{ url_for('outputs', filename=f) }}" download>
+                <span>{{ f }}</span>
+                <i class="fas fa-download download-icon"></i>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+        <a href="{{ url_for('index') }}" class="back-link">← Transcribe Another File</a>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Transcript Preview</h2>
+      {% if success %}
+        <div class="copy-row" style="margin-bottom:0.75rem;">
+          <button id="copyBtn" type="button" class="copy-btn" aria-live="polite">
+            <i class="fa-regular fa-clipboard icon" aria-hidden="true"></i>
+            <span class="label">Copy</span>
+          </button>
+          <span class="copy-tip">Copy transcript to clipboard</span>
+          <span id="copyStatus" style="color: var(--success-color); display:none; font-size:0.95rem;">Copied!</span>
+        </div>
+        <pre id="transcriptBox">{{ transcript_text }}</pre>
+      {% else %}
+        <pre>Unable to show transcript due to error.</pre>
+      {% endif %}
+    </div>
   </div>
 <script>
   (function(){

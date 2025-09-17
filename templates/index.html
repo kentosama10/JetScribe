@@ -162,51 +162,128 @@
 <body>
   <h1>JetScribe — Upload & Transcribe</h1>
 
-  <div class="form-container">
-    <form action="{{ url_for('transcribe') }}" method="post" enctype="multipart/form-data" onsubmit="onSubmit()">
-      <label>Choose file:
-        <input type="file" name="file" required accept="audio/*,video/*">
-      </label>
+  <style>
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      min-height: 200px;
+    }
+    .panel h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      font-size: 1.25rem;
+      color: var(--text-color);
+    }
+    .preview-box {
+      background: #f8fafc;
+      padding: 1rem;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      font-size: 0.9rem;
+      min-height: 240px;
+      color: #475569;
+      white-space: pre-wrap;
+    }
+  </style>
 
-      <label>Model:
-        <select name="model" class="model-select">
-          <option value="tiny" title="Fastest, lowest accuracy. Good for quick tests.">tiny</option>
-          <option value="base" title="Fast with decent accuracy. Good for short clips.">base</option>
-          <option value="small" title="Balanced speed and accuracy. ~2GB RAM required.">small</option>
-          <option value="medium" selected title="Good accuracy with reasonable speed. Recommended for most uses.">medium</option>
-          <option value="large-v2" title="High accuracy but slower processing. Best for complex audio.">large-v2</option>
-          <option value="large-v3" title="Latest and most accurate model. Requires significant RAM/processing power.">large-v3</option>
-        </select>
-      </label>
+  <div class="layout">
+    <div class="panel">
+      <h2>Upload</h2>
+      <div class="form-container" style="box-shadow:none; padding:0; background:transparent;">
+        <form action="{{ url_for('transcribe') }}" method="post" enctype="multipart/form-data" onsubmit="onSubmit()">
+          <label>Choose file:
+            <input type="file" name="file" required accept="audio/*,video/*">
+          </label>
 
-      <label>Output format:
-        <select name="format">
-          <option value="txt" selected>txt</option>
-          <option value="srt">srt</option>
-          <option value="json">json</option>
-          <option value="txt,srt,json">all</option>
-        </select>
-      </label>
+          <label>Model:
+            <select name="model" class="model-select">
+              <option value="tiny" title="Fastest, lowest accuracy. Good for quick tests.">tiny</option>
+              <option value="base" title="Fast with decent accuracy. Good for short clips.">base</option>
+              <option value="small" title="Balanced speed and accuracy. ~2GB RAM required.">small</option>
+              <option value="medium" selected title="Good accuracy with reasonable speed. Recommended for most uses.">medium</option>
+              <option value="large-v2" title="High accuracy but slower processing. Best for complex audio.">large-v2</option>
+              <option value="large-v3" title="Latest and most accurate model. Requires significant RAM/processing power.">large-v3</option>
+            </select>
+          </label>
 
-      <label>Device:
-        <select name="device">
-          <option value="cpu" selected>cpu</option>
-          <!-- <option value="cuda">cuda</option> -->
-        </select>
-      </label>
+          <label>Output format:
+            <select name="format">
+              <option value="txt" selected>txt</option>
+              <option value="srt">srt</option>
+              <option value="json">json</option>
+              <option value="txt,srt,json">all</option>
+            </select>
+          </label>
 
-      <label class="checkbox-label">
-        <input type="checkbox" name="diarize">
-        Enable speaker diarization
-      </label>
+          <label>Device:
+            <select name="device">
+              <option value="cpu" selected>cpu</option>
+              <!-- <option value="cuda">cuda</option> -->
+            </select>
+          </label>
 
-      <p class="muted">Large models take a long time and need more RAM/VRAM. For testing, use small/medium.</p>
+          <label class="checkbox-label">
+            <input type="checkbox" name="diarize">
+            Enable speaker diarization
+          </label>
 
-      <button type="submit" id="submitBtn">Upload & Transcribe</button>
-    </form>
+          <p class="muted">Large models take a long time and need more RAM/VRAM. For testing, use small/medium.</p>
+
+          <button type="submit" id="submitBtn">Upload & Transcribe</button>
+        </form>
+      </div>
+
+      <div id="status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Transcript Preview</h2>
+      {% if success is defined %}
+        {% if success %}
+          <div class="copy-row" style="display:flex; gap:12px; align-items:center; margin-bottom:0.75rem;">
+            <button id="copyBtn" type="button" class="copy-btn" aria-live="polite" style="display:inline-flex; align-items:center; gap:8px; padding:0.5rem 0.9rem; background:#ffffff; color:#1e293b; border:1px solid #e2e8f0; border-radius:8px; font-size:0.95rem; font-weight:500; cursor:pointer;">
+              <span class="label">Copy</span>
+            </button>
+            <span class="copy-tip" style="color:#64748b; font-size:0.9rem;">Copy transcript to clipboard</span>
+            <span id="copyStatus" style="color:#059669; display:none; font-size:0.95rem;">Copied!</span>
+          </div>
+          <pre id="transcriptBox" class="preview-box">{{ transcript_text }}</pre>
+          {% if files and files|length %}
+            <h3 style="margin-top:1rem;">Generated Files</h3>
+            <ul class="files-list" style="list-style:none; padding:0;">
+              {% for f in files %}
+                <li style="margin:0.5rem 0;">
+                  <a href="{{ url_for('outputs', filename=f) }}" download style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; background:#f1f5f9; border-radius:6px; color:#1e293b; text-decoration:none;">
+                    <span>{{ f }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endif %}
+        {% else %}
+          <div class="status error" style="padding:1rem; border-radius:6px; margin:1rem 0; background:#fee2e2; color:#dc2626;">
+            <h3 style="margin:0 0 0.5rem 0;">Transcription Failed</h3>
+            <pre style="background:#fff; border:1px solid #fecaca; padding:0.75rem; border-radius:6px; overflow:auto; max-height:220px;">{{ log }}</pre>
+          </div>
+        {% endif %}
+      {% else %}
+        <div class="preview-box" id="previewBox">
+          Transcript will appear here after processing.
+        </div>
+        <p class="muted" style="margin-top: 0.75rem;">Upload a file on the left to see your transcript here.</p>
+      {% endif %}
+    </div>
   </div>
-
-  <div id="status"></div>
 
   <script>
     function onSubmit() {
@@ -226,6 +303,43 @@
         `;
     }
   </script>
+
+  {% if success %}
+  <script>
+    (function(){
+      const btn = document.getElementById('copyBtn');
+      const status = document.getElementById('copyStatus');
+      const box = document.getElementById('transcriptBox');
+      if (btn && box) {
+        btn.addEventListener('click', async () => {
+          const label = btn.querySelector('.label');
+          const prevLabel = label ? label.textContent : '';
+          const showCopied = () => {
+            if (label) label.textContent = 'Copied';
+            if (status) { status.style.display = 'inline'; }
+            setTimeout(() => {
+              if (label) label.textContent = prevLabel || 'Copy';
+              if (status) { status.style.display = 'none'; }
+            }, 1600);
+          };
+          try {
+            await navigator.clipboard.writeText(box.textContent || '');
+            showCopied();
+          } catch (e) {
+            const range = document.createRange();
+            range.selectNodeContents(box);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            try { document.execCommand('copy'); } catch (_) {}
+            sel.removeAllRanges();
+            showCopied();
+          }
+        });
+      }
+    })();
+  </script>
+  {% endif %}
 </body>
 
 </html>

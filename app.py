@@ -140,7 +140,7 @@ def transcribe():
     )
 
     if not result.get("success"):
-        return render_template("result.html", success=False, log=result.get("log", ""), files=[])
+        return render_template("index.html", success=False, log=result.get("log", ""), files=[], transcript_text="")
 
     # show results (files are absolute paths; convert to relative filenames)
     abs_files = result.get("files", [])
@@ -151,7 +151,7 @@ def transcribe():
 
     transcript_text = _extract_transcript_text(abs_files)
 
-    return render_template("result.html", success=True, files=files, transcript_text=transcript_text)
+    return render_template("index.html", success=True, files=files, transcript_text=transcript_text)
 
 @app.route("/outputs/<path:filename>")
 def outputs(filename):
